@@ -6,86 +6,63 @@ clc;
 more off;
 format long;
 
-fname = "LeeFrame.txt";
-%fname = "ArchZienkiewicz.txt";
+fname = "input_LeeFrame.txt";
+%fname = "input_Arch_semicircle.txt";
+%fname = "input_ArchZienkiewicz.txt";
+%fname = "input_Arch_model1.txt"
 
-[nnode, nelem, coords, elemConn, elemData, ndof, nDBC, dbclist, nFBC, fbclist, LM, neq, assy4r, dof_force, Fext] = processfile(fname);
+%fname = "input_Truss_2D_2members.txt";
+%fname = "input_Truss_3D_2members.txt";
+%fname = "input_Truss_3D_12members.txt";
 
-%
-soln = zeros(neq,1);
+[ndim, ndof, nnode, nelem, coords, elemConn, elemData, LM, neq, assy4r, dof_force, Fext, maxloadSteps, loadincr, outputlist] = processfile(fname)
 
-disp = soln;
-velo = soln;
-acce = soln;
+disp = zeros(neq,1);
 
-dispPrev2 = soln;
-dispPrev3 = soln;
-dispPrev4 = soln;
-
-dispPrev = soln;
-veloPrev = soln;
-accePrev = soln;
-dispDotPrev = soln;
-
-dispCur = soln;
-veloCur = soln;
-acceCur = soln;
+dispPrev  = disp;
+dispPrev2 = disp;
+dispPrev3 = disp;
+dispPrev4 = disp;
 
 
 Kglobal = zeros(neq,neq);
 Fglobal = zeros(neq,1);
 
-dt=1.0;
-t=0.0:dt:4.0;
-
-Nt=max(size(t));
-
-td = timeSteppingParameters_Solid(0, 0.0, dt);
-
-%dx = zeros(1,Nt);
-%dy = zeros(1,Nt);
-vx = zeros(1,Nt);
-vy = zeros(1,Nt);
-ax = zeros(1,Nt);
-ay = zeros(1,Nt);
-%llist = dx;
 
 bf=[0.0 0.0];
 
-ds = 0.5;
+ds = loadincr;
 dsPrev = ds;
 dsPrev2 = ds;
 ds_max = ds;
-ds_min = 0.1;
-loadfact = ds;
+ds_min = ds;
+
+loadfactor      = loadincr;
+loadfactorPrev2 = 0.0;
+loadfactorPrev  = 0.0;
 
 converged = false;
 convergedPrev = false;
 
-loadStep = 2;
+loadStepConverged = 2;
+output = [disp(outputlist)];
+llist = [0.0];
 
 
-for  timeStep=2:50
-    printf("time step = %d \n", timeStep);
+for  loadStep=1:maxloadSteps
+    printf("load step = %d \n", loadStep);
 
-    if(abs(dispPrev(dof_force(end))) > 90.0)
-      break;
+    if(loadStep > 1)
+      ds
+      dsPrev
+      dsFactor1 = ds/dsPrev
+      disp     = (1.0+dsFactor1)*dispPrev - dsFactor1*dispPrev2;
+      loadfactor = (1.0+dsFactor1)*loadfactorPrev - dsFactor1*loadfactorPrev2;
     endif
 
-    ds
-    dsPrev
-    dsFactor1 = ds/dsPrev
-    disp = (1.0+dsFactor1)*dispPrev - dsFactor1*dispPrev2;
+    Du = disp - dispPrev;
+    Dl = loadfactor - loadfactorPrev;
 
-%    dsFactor1 = (ds^2+ds*(dsPrev+dsPrev2))/dsPrev/dsPrev2;
-%    dsFactor2 = -ds*(dsPrev+dsPrev2)/(dsPrev+dsPrev2)/dsPrev2;
-%    disp = (1.0+dsFactor1+dsFactor2)*dispPrev - dsFactor1*dispPrev2 - dsFactor2*dispPrev3;
-
-%    Du = (disp(1:neq-1) - dispPrev(1:neq-1)).*sign((1.0+ds/dsPrev)*dispPrev(1:neq-1) - (ds/dsPrev)*dispPrev2(1:neq-1));
-
-    Du = disp(1:neq-1) - dispPrev(1:neq-1);
-    Dl = disp(neq)  - dispPrev(neq);
-    
     convergedPrev = converged;
     converged = false;
 
@@ -93,46 +70,67 @@ for  timeStep=2:50
         Kglobal(1:end,1:end) = 0.0;
         Fglobal(1:end) = 0.0;
 
-        if(timeStep > 2)
-          loadfact = disp(neq);
+%        loadfactor
+        
+        if(ndim == 2)
+          if(ndof == 2) % Truss element
+            for e = 1:nelem
+                [Klocal, Flocal] = Truss_2D_model2(elemData, elemConn, e, coords, disp, bf);
+
+                Kglobal = Assembly_Matrix(Kglobal,Klocal,LM,e);
+                Fglobal = Assembly_Vector(Fglobal,Flocal,LM,e);
+            end
+          else % Beam element
+            for e = 1:nelem
+                [Klocal, Flocal] = GeomExactBeam_2D(elemData, elemConn, e, coords, disp, bf);
+
+                Kglobal = Assembly_Matrix(Kglobal,Klocal,LM,e);
+                Fglobal = Assembly_Vector(Fglobal,Flocal,LM,e);
+            end
+          endif
+        else
+          if(ndof == 3) % Truss element
+            for e = 1:nelem
+                [Klocal, Flocal] = Truss_3D_model2(elemData, elemConn, e, coords, disp, bf);
+
+                Kglobal = Assembly_Matrix(Kglobal,Klocal,LM,e);
+                Fglobal = Assembly_Vector(Fglobal,Flocal,LM,e);
+            end
+          endif
         endif
-        loadfact
 
-        for e = 1:nelem
-            [Klocal, Flocal] = GeomExactBeam_2D(elemData, elemConn, e, coords, td, disp, veloCur, acceCur, bf);
+        Fglobal = Fglobal + loadfactor*Fext;
 
-            Kglobal = Assembly_Matrix(Kglobal,Klocal,LM,e);
-            Fglobal = Assembly_Vector(Fglobal,Flocal,LM,e);
-        end
-
-        Fglobal = Fglobal + loadfact*Fext;
-
-%        [converged, du, dl] = solve_arclength(timeStep, neq, iter, Kglobal, Fglobal, dof_force, Fext, assy4r, Du, Dl, ds);
-        [converged, du, dl] = solve_arclength_split(timeStep, neq, iter, Kglobal, Fglobal, dof_force, Fext, assy4r, Du, Dl, ds);
+%        [converged, du, dl] = solve_arclength(loadStep, neq, iter, Kglobal, Fglobal, dof_force, Fext, assy4r, Du, Dl, ds);
+        [converged, du, dl] = solve_arclength_split(loadStep, neq, iter, Kglobal, Fglobal, dof_force, Fext, assy4r, Du, Dl, ds);
 
         if(converged)
           break;
         endif
 
-        disp(assy4r(1:end-1)) = disp(assy4r(1:end-1)) + du;
-        disp(end) = disp(end) + dl;
+        disp(assy4r) = disp(assy4r) + du;
+        loadfactor = loadfactor + dl;
 
-        Du(assy4r(1:end-1)) = Du(assy4r(1:end-1)) + du;
+        Du(assy4r) = Du(assy4r) + du;
         Dl = Dl + dl;
     end
 
-    dsPrev2 = dsPrev;
-    dsPrev = ds;
-    
     if (converged)
-      if(timeStep == 2)
-         disp(end)  = ds;
+      if(loadStep == 1)
          ds = norm(disp-dispPrev);
+         ds = sqrt(ds*ds + loadfactor*loadfactor)
+
          dsPrev = ds;
          dsPrev2 = ds;
          ds_max = ds;
-         ds_min = 0.1;
+         ds_min = ds*1.0e-3;
       end
+
+      dsPrev2 = dsPrev;
+      dsPrev = ds;
+
+      loadfactorPrev2 = loadfactorPrev;
+      loadfactorPrev  = loadfactor;
 
       if(convergedPrev)
         ds = min(max(2.0*ds, ds_min), ds_max);
@@ -143,30 +141,21 @@ for  timeStep=2:50
       dispPrev2 = dispPrev;
       dispPrev  = disp;
 
-      dx(loadStep) = disp(dof_force-1);
-      dy(loadStep) = disp(dof_force);
+      output = [output disp(outputlist)];
+      llist = [llist; loadfactor];
 
-%      disp(end)
-      llist(loadStep) = disp(end);
-
-%      plot(abs(dx), llist, 'bs-'); hold on;
-      plot(abs(dy), llist,'ko-')
+%      plot(abs(output(1,:)), llist, 'bs-'); hold on;
+      plot(abs(output(end,:)), llist,'ko-');
 %      plot(abs(dy)/R, (E*I/R/R)*llist.^(-1),'ko-')
 %      plot(coords(:,1)+disp(1:3:neq-1), coords(:,2)+disp(2:3:neq-1), 'ko-')
 %      axis([-150 150 -150 150])
       hold on
-      loadStep = loadStep + 1;
+      loadStepConverged = loadStepConverged + 1;
     else
-%      disp      = dispPrev;
-%      dispPrev  = dispPrev2;
-%      dispPrev2 = dispPrev3;
-%      dispPrev3 = dispPrev4;
-
       if(convergedPrev)
         ds = max(ds*0.5, ds_min);
       else
-%        beta = 10.0;
-        ds = max(ds*0.25, ds_min);
+        ds = max(ds*0.1, ds_min);
       endif
     endif
 

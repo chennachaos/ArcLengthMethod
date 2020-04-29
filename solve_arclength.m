@@ -1,6 +1,6 @@
 function  [converged, du, dl] = solve_arclength(timeStep, neq, iter, Kglobal, Fglobal, dof_force, Fext, assy4r, Du, Dl, ds)
 
-    if(timeStep > 2)
+    if(timeStep > 1)
         dummy = Du'*Du + Dl*Dl - ds*ds;
         Fglobal(neq) = Fglobal(neq) - dummy;
 

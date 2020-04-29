@@ -1,4 +1,4 @@
-function [nnode, nelem, coords, elemConn, elemData, ndof, nDBC, dbclist, nFBC, fbclist, LM, neq, assy4r, dof_force, Fext] = processfile(fname)
+function [ndim, ndof, nnode, nelem, coords, elemConn, elemData, LM, neq, assy4r, dof_force, Fext, maxloadSteps, loadincr, outputlist] = processfile(fname)
 clc
 % coords: global coordinates of the nodes, x, y, and z
 % elemConn: element connectivities
@@ -7,37 +7,54 @@ clc
 % nperelem: number of nodes per element for all elements
 % ndof: number of degrees of per node
 
-
 fid=fopen(fname,'r');
+
+% ndim
+
+line=fgets(fid);
+linestr = strsplit(line, ",");
+ndim = int32(str2num(linestr(2){:}))
+
+% ndof
 
 line=fgets(fid);
 linestr = strsplit(line, ",");
 ndof = int32(str2num(linestr(2){:}))
-
 
 % nodes
 
 line=fgets(fid);
 linestr = strsplit(line, ",");
 nnode = int32(str2num(linestr(2){:}))
-coords = zeros(nnode,2);
 
+nperelem = 2;
+nsize = nperelem*ndof;
+neq = nnode*ndof;
+%if(arclen)
+%  neq = neq+1;
+%endif
+%neq
+
+coords = zeros(nnode,ndim);
 for i=1:nnode
     line = fgets(fid);
     linestr = strsplit(line, ",");
 
     coords(i,1) = double(str2num(linestr(2){:}));
     coords(i,2) = double(str2num(linestr(3){:}));
+    if(ndim == 3)
+      coords(i,3) = double(str2num(linestr(4){:}));
+    endif
 end    
-coords
+
 
 % elements
 
 line=fgets(fid);
 linestr = strsplit(line, ",");
 nelemData = int32(str2num(linestr(2){:}))
-elemData = zeros(nelemData, 10);
 
+elemData = zeros(nelemData, 10);
 for i=1:nelemData
     line = fgets(fid);
     linestr = strsplit(line, ",");
@@ -46,15 +63,14 @@ for i=1:nelemData
       elemData(i,j) = double(str2num(linestr(j+1){:}));
     endfor
 end
-elemData
 
 % elements
 
 line=fgets(fid);
 linestr = strsplit(line, ",");
 nelem = int32(str2num(linestr(2){:}))
-elemConn = zeros(nelem, 4, "int32");
 
+elemConn = zeros(nelem, 4, "int32");
 for i=1:nelem
     line = fgets(fid);
     linestr = strsplit(line, ",");
@@ -64,24 +80,26 @@ for i=1:nelem
     elemConn(i,3) = int32(str2num(linestr(4){:}));
     elemConn(i,4) = int32(str2num(linestr(5){:}));
 end
-elemConn
 
 % Dirichlet boundary conditions
 
 line=fgets(fid);
 linestr = strsplit(line, ",");
 nDBC    = int32(str2num(linestr(2){:}))
-dbclist = zeros(nDBC, 3);
 
+%dbclist = zeros(nDBC, 3);
+dbcnodes = zeros(nDBC, 1, "int32");
 for i=1:nDBC
     line = fgets(fid);
     linestr = strsplit(line, ",");
 
-    dbclist(i,1) = double(str2num(linestr(1){:}));
-    dbclist(i,2) = double(str2num(linestr(2){:}));
-    dbclist(i,3) = double(str2num(linestr(3){:}));
+    n1 = int32(str2num(linestr(1){:}));
+    n2 = int32(str2num(linestr(2){:}));
+%    dbclist(i,3) = double(str2num(linestr(3){:}));
+    dbcnodes(i) = (n1-1)*ndof+n2;
 end
-dbclist
+
+assy4r = setdiff([1:neq], dbcnodes)';
 
 % Force boundary conditions
 
@@ -90,28 +108,55 @@ linestr = strsplit(line, ",");
 nFBC    = int32(str2num(linestr(2){:}))
 fbclist = zeros(nFBC, 3);
 
+%dof_force = zeros(nFBC, 1, "int32");
+Fext = zeros(neq, 1);
 for i=1:nFBC
     line = fgets(fid);
     linestr = strsplit(line, ",");
 
-    fbclist(i,1) = double(str2num(linestr(1){:}));
-    fbclist(i,2) = double(str2num(linestr(2){:}));
-    fbclist(i,3) = double(str2num(linestr(3){:}));
-end
-fbclist
+    n1 = int32(str2num(linestr(1){:}));
+    n2 = int32(str2num(linestr(2){:}));
+    ind = (n1-1)*ndof + n2;
 
-% Whether arclength is active or not
+%    dof_force(i) = ind;
+    Fext(ind) = double(str2num(linestr(3){:}));
+end
+
+% for output
+
 line=fgets(fid);
 linestr = strsplit(line, ",");
-arclen  = (linestr(2){:} == "ON")
+nOutput = int32(str2num(linestr(2){:}))
+outputlist = zeros(nOutput, 1, "int32");
 
+for i=1:nOutput
+    line = fgets(fid);
+    linestr = strsplit(line, ",");
+
+    n1 = int32(str2num(linestr(1){:}));
+    n2 = int32(str2num(linestr(2){:}));
+
+    outputlist(i,1) = (n1-1)*ndof+n2;
+end
+
+
+% Arclength parameters
+
+line=fgets(fid);
+linestr = strsplit(line, ",");
+arclen  = (int32(linestr(2){:}) == 1);
+
+line=fgets(fid)
+linestr = strsplit(line, ",");
+maxloadSteps = int32(str2num(linestr(1){:}));
+
+line=fgets(fid)
+linestr = strsplit(line, ",");
+loadincr = double(str2num(linestr(1){:}));
 
 fclose(fid);
 
 % data structures
-
-nperelem = 2;
-nsize = nperelem*ndof;
 
 LM  = zeros(nelem, nsize);
 
@@ -127,34 +172,6 @@ for e=1:nelem
     end
     count = count - 1;
 end
-
-
-dbcnodes = []
-for i=1:nDBC
-  n1 = dbclist(i,1);
-  n2 = dbclist(i,2);
-  ind = (n1-1)*ndof;
-  dbcnodes = [dbcnodes ind+n2];
-endfor
-
-neq = nnode*ndof;
-if(arclen)
-  neq = neq+1;
-endif
-neq
-
-assy4r = setdiff([1:neq], dbcnodes)';
-
-dof_force = zeros(nFBC, 1, "int32");
-Fext = zeros(neq, 1);
-for i=1:nFBC
-  n1 = fbclist(i,1);
-  n2 = fbclist(i,2);
-  ind = (n1-1)*ndof+n2;
-
-  dof_force(i) = (fbclist(i,1)-1)*ndof + fbclist(i,2);
-  Fext(ind) = fbclist(i,3);
-endfor
 
 
 

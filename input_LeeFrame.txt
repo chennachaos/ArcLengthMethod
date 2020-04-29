@@ -1,3 +1,4 @@
+ndim,2
 ndof,3
 coor, 11
  1,  0.0,   0.0
@@ -31,4 +32,9 @@ bound,4
 11,2,0.0
 force,1
 7,2,-1.0
+output,2
+7,1
+7,2
 arclength,ON
+40
+0.5
