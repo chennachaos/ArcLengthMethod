@@ -48,7 +48,7 @@ for i=1:nnode
 end    
 
 
-% elements
+% element data
 
 line=fgets(fid);
 linestr = strsplit(line, ",");

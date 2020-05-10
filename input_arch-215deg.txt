@@ -133,8 +133,9 @@ bound,5
 61,3,0.0
 force,1
 31,2,-1.0
-output,1
+output,2
+31,1
 31,2
 arclength,ON
-100
+120
 50.0

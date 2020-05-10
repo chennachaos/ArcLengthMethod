@@ -42,7 +42,6 @@ disp(4) = soln(ndof*(IEN(e,4)-1)+2);
 
     B0 = zeros(4,1);
     B(1) = -dx;   B(2) = -dy;   B(3) =  dx;   B(4) =  dy;
-    B = B/L0/L0;
 
     H = zeros(4,4);
     H(1,1) =  1.0;    H(1,3) = -1.0;
@@ -53,18 +52,17 @@ disp(4) = soln(ndof*(IEN(e,4)-1)+2);
     Klocal = zeros(4,4);
     Flocal = zeros(4,1);
 
-    strain = (L*L/L0/L0 - 1.0)/2.0 ;
+    strain = (L/L0 - 1.0) ;
 
     % axial force
     N = (A0*E)*strain;
 
     % residual
-    Flocal = Flocal - N*L0*B';
+    Flocal = Flocal - N*B'/L;
 
     % stiffness
-    Klocal = Klocal + ((E*A0*L0*B')*B) ;
-    Klocal = Klocal + ((N/L0)*H);
-
+    Klocal = Klocal + ((E*A0*B')*B)/L^3 ;
+    Klocal = Klocal + ((N/L)*H);
 endfunction
 
 

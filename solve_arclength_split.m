@@ -1,10 +1,14 @@
 function  [converged, du, dl] = solve_arclength_split(timeStep, neq, iter, Kglobal, Fglobal, dof_force, Fext, assy4r, Du, Dl, ds)
 
+    psi = 1.0;
+
+    FextReduced = Fext(assy4r);
+    FtF = Fext'*Fext;
     if(timeStep > 1)
-        A = Du'*Du + Dl*Dl - ds*ds;
+        A = Du'*Du + psi*Dl*Dl*FtF - ds*ds;
 
         a = 2.0*Du(assy4r)';
-        b = 2.0*Dl;
+        b = 2.0*psi*Dl*FtF;
     else
         A = 0.0;
         a = 0.0*Du(assy4r)';
@@ -12,7 +16,7 @@ function  [converged, du, dl] = solve_arclength_split(timeStep, neq, iter, Kglob
     endif
 
     %%% Applying Boundary Conditions
-        
+
     F1 = Fglobal(assy4r);
 
     rNorm = norm(F1,2);
@@ -27,14 +31,14 @@ function  [converged, du, dl] = solve_arclength_split(timeStep, neq, iter, Kglob
        converged = true;
        return;
     end
-        
+
     K1 = Kglobal(assy4r,assy4r);
     [L, U, P] = lu(sparse(K1));
 
     %% solve the matrix system
-    duu = L\(P*Fext(assy4r));
+    duu = L\(P*FextReduced);
     du1 = U\duu;
- 
+
     duu = L\(P*F1);
     du2 = U\duu;
 

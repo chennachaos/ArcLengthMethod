@@ -1,17 +1,19 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 clear all;
 clc;
 more off;
 format long;
 
-fname = "input_LeeFrame.txt";
-%fname = "input_Arch_semicircle.txt";
-%fname = "input_ArchZienkiewicz.txt";
+%fname = "input_LeeFrame-nelem20.txt";
+%fname = "input_Arch_semicircle-nelem50-sym.txt";
+%fname = "input_Arch_semicircle-nelem50-unsym.txt";
+fname = "input_arch-215deg.txt";
 %fname = "input_Arch_model1.txt"
 
-%fname = "input_Truss_2D_2members.txt";
+%fname = "input_Truss_2D_2members_model1.txt";
+%fname = "input_Truss_2D_3members_model1.txt";
+%fname = "input_Truss_2D_15deg.txt";
 %fname = "input_Truss_3D_2members.txt";
 %fname = "input_Truss_3D_12members.txt";
 
@@ -33,9 +35,8 @@ bf=[0.0 0.0];
 
 ds = loadincr;
 dsPrev = ds;
-dsPrev2 = ds;
-ds_max = ds;
-ds_min = ds;
+dsMax = ds;
+dsMin = ds;
 
 loadfactor      = loadincr;
 loadfactorPrev2 = 0.0;
@@ -44,10 +45,11 @@ loadfactorPrev  = 0.0;
 converged = false;
 convergedPrev = false;
 
-loadStepConverged = 2;
+loadStepConverged = 0;
 output = [disp(outputlist)];
 llist = [0.0];
 
+dispFull = [disp];
 
 for  loadStep=1:maxloadSteps
     printf("load step = %d \n", loadStep);
@@ -70,12 +72,10 @@ for  loadStep=1:maxloadSteps
         Kglobal(1:end,1:end) = 0.0;
         Fglobal(1:end) = 0.0;
 
-%        loadfactor
-        
         if(ndim == 2)
           if(ndof == 2) % Truss element
             for e = 1:nelem
-                [Klocal, Flocal] = Truss_2D_model2(elemData, elemConn, e, coords, disp, bf);
+                [Klocal, Flocal] = Truss_2D_model1(elemData, elemConn, e, coords, disp, bf);
 
                 Kglobal = Assembly_Matrix(Kglobal,Klocal,LM,e);
                 Fglobal = Assembly_Vector(Fglobal,Flocal,LM,e);
@@ -117,51 +117,68 @@ for  loadStep=1:maxloadSteps
 
     if (converged)
       if(loadStep == 1)
-         ds = norm(disp-dispPrev);
-         ds = sqrt(ds*ds + loadfactor*loadfactor)
+         ds = sqrt(Du'*Du + loadfactor*loadfactor*Fext'*Fext);
 
-         dsPrev = ds;
-         dsPrev2 = ds;
-         ds_max = ds;
-         ds_min = ds*1.0e-3;
+         dsMax = ds;
+         dsMin = ds/1024.0;
       end
-
-      dsPrev2 = dsPrev;
-      dsPrev = ds;
 
       loadfactorPrev2 = loadfactorPrev;
       loadfactorPrev  = loadfactor;
-
-      if(convergedPrev)
-        ds = min(max(2.0*ds, ds_min), ds_max);
-      endif
-
-      dispPrev4 = dispPrev3;
-      dispPrev3 = dispPrev2;
       dispPrev2 = dispPrev;
       dispPrev  = disp;
 
+      dsPrev = ds;
+      if(convergedPrev)
+        ds = min(max(2.0*ds, dsMin), dsMax);
+      endif
+
+      dispFull = [dispFull; disp];
       output = [output disp(outputlist)];
       llist = [llist; loadfactor];
+      
+%      plot(abs(output(1,:)), llist,'bx-');
+%      hold on
+      plot(abs(output(2,:)), llist,'bs-');
+      hold on
 
+%      linestr = strsplit(fname, ".");
+%      figname = strcat(linestr(1){:}, "_", num2str(loadStepConverged), ".pdf")
+%      plot_semicircular_arch(coords, disp, figname);
 %      plot(abs(output(1,:)), llist, 'bs-'); hold on;
-      plot(abs(output(end,:)), llist,'ko-');
+%      plot(abs(output(end,:)), llist,'bx-');
 %      plot(abs(dy)/R, (E*I/R/R)*llist.^(-1),'ko-')
 %      plot(coords(:,1)+disp(1:3:neq-1), coords(:,2)+disp(2:3:neq-1), 'ko-')
 %      axis([-150 150 -150 150])
-      hold on
+%      hold on
+
+%      for e=1:nelem
+%        n1 = elemConn(e,3);
+%        n2 = elemConn(e,4);
+%        xx = [coords(n1,1)+disp(ndof*(n1-1)+1) coords(n2,1)+disp(ndof*(n2-1)+1)];
+%        yy = [coords(n1,2)+disp(ndof*(n1-1)+2) coords(n2,2)+disp(ndof*(n2-1)+2)];
+%        plot(xx, yy, 'ko-')
+%        hold on
+%      endfor
+%      axis([-0.6 0.6 -3 3])
+%      hold off
+
       loadStepConverged = loadStepConverged + 1;
     else
       if(convergedPrev)
-        ds = max(ds*0.5, ds_min);
+        ds = max(ds*0.5, dsMin);
       else
-        ds = max(ds*0.1, ds_min);
+        ds = max(ds*0.25, dsMin);
       endif
     endif
 
 %    waitforbuttonpress
 end
 
+%plot(abs(output(1,:)), llist,'bx-');
+%hold on
+%plot(abs(output(2,:)), llist,'ko-');
+      
 %plot(t, dy,'k-')
 %figure(1)
 %plot(coords(:,1)+disp(1:3:neq-1), coords(:,2)+disp(2:3:neq-1), 'ko-')
@@ -169,13 +186,22 @@ end
 %plot(dx, llist, 'bs-'); hold on; plot(abs(dy),llist,'ko-')
 % axis([0,10,-10,10])
 
-%fileID = fopen('solution.dat','w');
-%
-%for ii=1:Nt
-%    fprintf(fileID,'%12.6f \t %12.6f \t %12.6f \t %12.6f \t %12.6f \t %12.6f \t %12.6f \n', t(ii), dx(ii), dy(ii), vx(ii), vy(ii), ax(ii), ay(ii));
-%end
+fileID = fopen('solution.dat','w');
+
+for ii=1:size(dispFull)(1)
+    fprintf(fileID,'%12.8f \n', dispFull(ii));
+end
+
+fclose(fileID)
 
 
+fileID = fopen('path.dat','w');
 
+for ii=1:size(llist)(1)
+    fprintf(fileID,'%12.8f \t %12.8f \t %12.8f \n', llist(ii), output(1,ii), output(2,ii));
+%    fprintf(fileID,'%12.8f \t %12.8f \t %12.8f \t %12.8f \n', llist(ii), output(1,ii), output(2,ii), output(3,ii));
+end
+
+fclose(fileID)
 
 

@@ -87,20 +87,20 @@ for gp = 1:nGP
         duz = duz + uzn(ii) * dN_dx(ii);
         dbt = dbt + btn(ii) * dN_dx(ii);
     end
-            
+
     sbt = sin(bt);
     cbt = cos(bt);
-            
+
     %compute average normal strain, shear strain and curvature
-            
+
     fact = (1.0+dux)*cbt - duz*sbt;
-            
+
     E = dux + 0.5*(dux*dux + duz*duz);
     G = (1.0+dux)*sbt + duz*cbt;
     K = dbt * fact;
-            
+
     % compute material response (elastic)
-            
+
     NF = EA * E; % normal force
     SF = GA * G; % shear force
     BM = EI * K; % bending moment
@@ -144,7 +144,7 @@ for gp = 1:nGP
     D(1,1) = EAdv;
     D(2,2) = GAdv;
     D(3,3) = EIdv;
-            
+
     res(1) = NF;
     res(2) = SF;
     res(3) = BM;

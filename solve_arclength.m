@@ -26,7 +26,7 @@ function  [converged, du, dl] = solve_arclength(timeStep, neq, iter, Kglobal, Fg
     dl = 0.0;
     converged = false;
 
-    if(rNorm < 1.0e-6)
+    if(rNorm < 1.0e-8)
        converged = true;
        return;
     end
