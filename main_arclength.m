@@ -6,16 +6,13 @@ more off;
 format long;
 
 %fname = "input_LeeFrame-nelem20.txt";
+%fname = "input_arch-215deg.txt";
 %fname = "input_Arch_semicircle-nelem50-sym.txt";
 %fname = "input_Arch_semicircle-nelem50-unsym.txt";
-fname = "input_arch-215deg.txt";
-%fname = "input_Arch_model1.txt"
 
-%fname = "input_Truss_2D_2members_model1.txt";
 %fname = "input_Truss_2D_3members_model1.txt";
-%fname = "input_Truss_2D_15deg.txt";
 %fname = "input_Truss_3D_2members.txt";
-%fname = "input_Truss_3D_12members.txt";
+fname = "input_Truss_3D_12members.txt";
 
 [ndim, ndof, nnode, nelem, coords, elemConn, elemData, LM, neq, assy4r, dof_force, Fext, maxloadSteps, loadincr, outputlist] = processfile(fname)
 
@@ -33,10 +30,10 @@ Fglobal = zeros(neq,1);
 
 bf=[0.0 0.0];
 
-ds = loadincr;
-dsPrev = ds;
-dsMax = ds;
-dsMin = ds;
+Ds = loadincr;
+DsPrev = Ds;
+DsMax = Ds;
+DsMin = Ds;
 
 loadfactor      = loadincr;
 loadfactorPrev2 = 0.0;
@@ -55,11 +52,11 @@ for  loadStep=1:maxloadSteps
     printf("load step = %d \n", loadStep);
 
     if(loadStep > 1)
-      ds
-      dsPrev
-      dsFactor1 = ds/dsPrev
-      disp     = (1.0+dsFactor1)*dispPrev - dsFactor1*dispPrev2;
-      loadfactor = (1.0+dsFactor1)*loadfactorPrev - dsFactor1*loadfactorPrev2;
+      Ds
+      DsPrev
+      DsFactor1 = Ds/DsPrev
+      disp     = (1.0+DsFactor1)*dispPrev - DsFactor1*dispPrev2;
+      loadfactor = (1.0+DsFactor1)*loadfactorPrev - DsFactor1*loadfactorPrev2;
     endif
 
     Du = disp - dispPrev;
@@ -101,8 +98,8 @@ for  loadStep=1:maxloadSteps
 
         Fglobal = Fglobal + loadfactor*Fext;
 
-%        [converged, du, dl] = solve_arclength(loadStep, neq, iter, Kglobal, Fglobal, dof_force, Fext, assy4r, Du, Dl, ds);
-        [converged, du, dl] = solve_arclength_split(loadStep, neq, iter, Kglobal, Fglobal, dof_force, Fext, assy4r, Du, Dl, ds);
+%        [converged, du, dl] = solve_arclength(loadStep, neq, iter, Kglobal, Fglobal, dof_force, Fext, assy4r, Du, Dl, Ds);
+        [converged, du, dl] = solve_arclength_split(loadStep, neq, iter, Kglobal, Fglobal, dof_force, Fext, assy4r, Du, Dl, Ds);
 
         if(converged)
           break;
@@ -117,10 +114,10 @@ for  loadStep=1:maxloadSteps
 
     if (converged)
       if(loadStep == 1)
-         ds = sqrt(Du'*Du + loadfactor*loadfactor*Fext'*Fext);
+         Ds = sqrt(Du'*Du + loadfactor*loadfactor*Fext'*Fext);
 
-         dsMax = ds;
-         dsMin = ds/1024.0;
+         DsMax = Ds;
+         DsMin = Ds/1024.0;
       end
 
       loadfactorPrev2 = loadfactorPrev;
@@ -128,9 +125,9 @@ for  loadStep=1:maxloadSteps
       dispPrev2 = dispPrev;
       dispPrev  = disp;
 
-      dsPrev = ds;
+      DsPrev = Ds;
       if(convergedPrev)
-        ds = min(max(2.0*ds, dsMin), dsMax);
+        Ds = min(max(2.0*Ds, DsMin), DsMax);
       endif
 
       dispFull = [dispFull; disp];
@@ -166,9 +163,9 @@ for  loadStep=1:maxloadSteps
       loadStepConverged = loadStepConverged + 1;
     else
       if(convergedPrev)
-        ds = max(ds*0.5, dsMin);
+        Ds = max(Ds*0.5, DsMin);
       else
-        ds = max(ds*0.25, dsMin);
+        Ds = max(Ds*0.25, DsMin);
       endif
     endif
 
