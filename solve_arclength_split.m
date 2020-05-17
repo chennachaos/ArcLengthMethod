@@ -1,4 +1,4 @@
-function  [converged, du, dl] = solve_arclength_split(timeStep, neq, iter, Kglobal, Fglobal, dof_force, Fext, assy4r, Du, Dl, ds)
+function  [converged, du, dl, du1] = solve_arclength_split(timeStep, neq, iter, Kglobal, Rglobal, dof_force, Fext, assy4r, Du, Dl, ds, du1)
 
     psi = 1.0;
 
@@ -17,17 +17,17 @@ function  [converged, du, dl] = solve_arclength_split(timeStep, neq, iter, Kglob
 
     %%% Applying Boundary Conditions
 
-    F1 = Fglobal(assy4r);
+    R = Rglobal(assy4r);
 
-    rNorm = norm(F1,2);
+    rNorm = norm(R,2);
     rNorm = sqrt(rNorm*rNorm + A*A);
 
     printf(' rNorm : %5d ...  %12.6E \n', iter, rNorm);
-    du = F1*0.0;
+    du = R*0.0;
     dl = 0.0;
     converged = false;
 
-    if(rNorm < 1.0e-6)
+    if(rNorm < 1.0e-8)
        converged = true;
        return;
     end
@@ -39,9 +39,8 @@ function  [converged, du, dl] = solve_arclength_split(timeStep, neq, iter, Kglob
     duu = L\(P*FextReduced);
     du1 = U\duu;
 
-    duu = L\(P*F1);
+    duu = L\(P*R);
     du2 = U\duu;
-
     du2 = -du2; % this is because the Residual is added to the RHS
 
     dl = (a*du2 - A)/(b+a*du1);

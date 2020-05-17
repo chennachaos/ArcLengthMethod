@@ -5,14 +5,15 @@ clc;
 more off;
 format long;
 
-%fname = "input_LeeFrame-nelem20.txt";
+%fname = "input_Truss_2D_3members_model1.txt";
+%fname = "input_Truss_3D_2members.txt";
+%fname = "input_Truss_3D_12members.txt";
+
+fname = "input_LeeFrame-nelem10.txt";
 %fname = "input_arch-215deg.txt";
 %fname = "input_Arch_semicircle-nelem50-sym.txt";
 %fname = "input_Arch_semicircle-nelem50-unsym.txt";
-
-%fname = "input_Truss_2D_3members_model1.txt";
-%fname = "input_Truss_3D_2members.txt";
-fname = "input_Truss_3D_12members.txt";
+%fname = "input-beamEndMoment-nelem10.txt";
 
 [ndim, ndof, nnode, nelem, coords, elemConn, elemData, LM, neq, assy4r, dof_force, Fext, maxloadSteps, loadincr, outputlist] = processfile(fname)
 
@@ -25,7 +26,7 @@ dispPrev4 = disp;
 
 
 Kglobal = zeros(neq,neq);
-Fglobal = zeros(neq,1);
+Rglobal = zeros(neq,1);
 
 
 bf=[0.0 0.0];
@@ -67,7 +68,7 @@ for  loadStep=1:maxloadSteps
 
     for iter = 1:10
         Kglobal(1:end,1:end) = 0.0;
-        Fglobal(1:end) = 0.0;
+        Rglobal(1:end) = 0.0;
 
         if(ndim == 2)
           if(ndof == 2) % Truss element
@@ -75,14 +76,14 @@ for  loadStep=1:maxloadSteps
                 [Klocal, Flocal] = Truss_2D_model1(elemData, elemConn, e, coords, disp, bf);
 
                 Kglobal = Assembly_Matrix(Kglobal,Klocal,LM,e);
-                Fglobal = Assembly_Vector(Fglobal,Flocal,LM,e);
+                Rglobal = Assembly_Vector(Rglobal,Flocal,LM,e);
             end
           else % Beam element
             for e = 1:nelem
                 [Klocal, Flocal] = GeomExactBeam_2D(elemData, elemConn, e, coords, disp, bf);
 
                 Kglobal = Assembly_Matrix(Kglobal,Klocal,LM,e);
-                Fglobal = Assembly_Vector(Fglobal,Flocal,LM,e);
+                Rglobal = Assembly_Vector(Rglobal,Flocal,LM,e);
             end
           endif
         else
@@ -91,15 +92,15 @@ for  loadStep=1:maxloadSteps
                 [Klocal, Flocal] = Truss_3D_model2(elemData, elemConn, e, coords, disp, bf);
 
                 Kglobal = Assembly_Matrix(Kglobal,Klocal,LM,e);
-                Fglobal = Assembly_Vector(Fglobal,Flocal,LM,e);
+                Rglobal = Assembly_Vector(Rglobal,Flocal,LM,e);
             end
           endif
         endif
 
-        Fglobal = Fglobal + loadfactor*Fext;
+        Rglobal = Rglobal + loadfactor*Fext;
 
-%        [converged, du, dl] = solve_arclength(loadStep, neq, iter, Kglobal, Fglobal, dof_force, Fext, assy4r, Du, Dl, Ds);
-        [converged, du, dl] = solve_arclength_split(loadStep, neq, iter, Kglobal, Fglobal, dof_force, Fext, assy4r, Du, Dl, Ds);
+%        [converged, du, dl] = solve_arclength(loadStep, neq, iter, Kglobal, Rglobal, dof_force, Fext, assy4r, Du, Dl, Ds);
+        [converged, du, dl] = solve_arclength_split(loadStep, neq, iter, Kglobal, Rglobal, dof_force, Fext, assy4r, Du, Dl, Ds);
 
         if(converged)
           break;
@@ -113,6 +114,7 @@ for  loadStep=1:maxloadSteps
     end
 
     if (converged)
+%      disp
       if(loadStep == 1)
          Ds = sqrt(Du'*Du + loadfactor*loadfactor*Fext'*Fext);
 
