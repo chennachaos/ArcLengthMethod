@@ -27,7 +27,7 @@ function  [converged, du, dl, du1] = solve_arclength_split(timeStep, neq, iter, 
     dl = 0.0;
     converged = false;
 
-    if(rNorm < 1.0e-8)
+    if(rNorm < 1.0e-6)
        converged = true;
        return;
     end
