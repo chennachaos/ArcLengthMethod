@@ -9,9 +9,9 @@ format long;
 %fname = "input_Truss_3D_2members.txt";
 %fname = "input_Truss_3D_12members.txt";
 
-fname = "input_LeeFrame-nelem10.txt";
+%fname = "input_LeeFrame-nelem10.txt";
 %fname = "input_arch-215deg.txt";
-%fname = "input_Arch_semicircle-nelem50-sym.txt";
+fname = "input_Arch_semicircle-nelem50-sym.txt";
 %fname = "input_Arch_semicircle-nelem50-unsym.txt";
 %fname = "input-beamEndMoment-nelem10.txt";
 
@@ -48,6 +48,8 @@ output = [disp(outputlist)];
 llist = [0.0];
 
 dispFull = [disp];
+
+countrestarts = 0;
 
 for  loadStep=1:maxloadSteps
     printf("load step = %d \n", loadStep);
@@ -164,6 +166,8 @@ for  loadStep=1:maxloadSteps
 
       loadStepConverged = loadStepConverged + 1;
     else
+      countrestarts = countrestarts + 1;
+
       if(convergedPrev)
         Ds = max(Ds*0.5, DsMin);
       else
@@ -173,6 +177,8 @@ for  loadStep=1:maxloadSteps
 
 %    waitforbuttonpress
 end
+
+countrestarts
 
 %plot(abs(output(1,:)), llist,'bx-');
 %hold on
