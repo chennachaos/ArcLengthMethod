@@ -13,26 +13,26 @@ fid=fopen(fname,'r');
 
 line=fgets(fid);
 linestr = strsplit(line, ",");
-ndim = int32(str2num(linestr(2){:}))
+ndim = int32(str2num(linestr{1,2}))
 
 % ndof
 
 line=fgets(fid);
 linestr = strsplit(line, ",");
-ndof = int32(str2num(linestr(2){:}))
+ndof = int32(str2num(linestr{1,2}))
 
 % nodes
 
 line=fgets(fid);
 linestr = strsplit(line, ",");
-nnode = int32(str2num(linestr(2){:}))
+nnode = int32(str2num(linestr{1,2}))
 
 nperelem = 2;
 nsize = nperelem*ndof;
 neq = nnode*ndof;
 %if(arclen)
 %  neq = neq+1;
-%endif
+%end
 %neq
 
 coords = zeros(nnode,ndim);
@@ -40,11 +40,11 @@ for i=1:nnode
     line = fgets(fid);
     linestr = strsplit(line, ",");
 
-    coords(i,1) = double(str2num(linestr(2){:}));
-    coords(i,2) = double(str2num(linestr(3){:}));
+    coords(i,1) = double(str2num(linestr{1,2}));
+    coords(i,2) = double(str2num(linestr{1,3}));
     if(ndim == 3)
-      coords(i,3) = double(str2num(linestr(4){:}));
-    endif
+      coords(i,3) = double(str2num(linestr{1,4}));
+    end
 end    
 
 
@@ -52,7 +52,7 @@ end
 
 line=fgets(fid);
 linestr = strsplit(line, ",");
-nelemData = int32(str2num(linestr(2){:}))
+nelemData = int32(str2num(linestr{1,2}))
 
 elemData = zeros(nelemData, 10);
 for i=1:nelemData
@@ -60,32 +60,32 @@ for i=1:nelemData
     linestr = strsplit(line, ",");
 
     for j=1:10
-      elemData(i,j) = double(str2num(linestr(j+1){:}));
-    endfor
+      elemData(i,j) = double(str2num(linestr{1,j+1}));
+    end
 end
 
 % elements
 
 line=fgets(fid);
 linestr = strsplit(line, ",");
-nelem = int32(str2num(linestr(2){:}))
+nelem = int32(str2num(linestr{1,2}))
 
 elemConn = zeros(nelem, 4, "int32");
 for i=1:nelem
     line = fgets(fid);
     linestr = strsplit(line, ",");
 
-    elemConn(i,1) = int32(str2num(linestr(2){:}));
-    elemConn(i,2) = int32(str2num(linestr(3){:}));
-    elemConn(i,3) = int32(str2num(linestr(4){:}));
-    elemConn(i,4) = int32(str2num(linestr(5){:}));
+    elemConn(i,1) = int32(str2num(linestr{1,2}));
+    elemConn(i,2) = int32(str2num(linestr{1,3}));
+    elemConn(i,3) = int32(str2num(linestr{1,4}));
+    elemConn(i,4) = int32(str2num(linestr{1,5}));
 end
 
 % Dirichlet boundary conditions
 
 line=fgets(fid);
 linestr = strsplit(line, ",");
-nDBC    = int32(str2num(linestr(2){:}))
+nDBC    = int32(str2num(linestr{1,2}))
 
 %dbclist = zeros(nDBC, 3);
 dbcnodes = zeros(nDBC, 1, "int32");
@@ -93,9 +93,9 @@ for i=1:nDBC
     line = fgets(fid);
     linestr = strsplit(line, ",");
 
-    n1 = int32(str2num(linestr(1){:}));
-    n2 = int32(str2num(linestr(2){:}));
-%    dbclist(i,3) = double(str2num(linestr(3){:}));
+    n1 = int32(str2num(linestr{1,1}));
+    n2 = int32(str2num(linestr{1,2}));
+%    dbclist(i,3) = double(str2num(linestr{1,3}));
     dbcnodes(i) = (n1-1)*ndof+n2;
 end
 
@@ -105,36 +105,36 @@ assy4r = setdiff([1:neq], dbcnodes)';
 
 line=fgets(fid);
 linestr = strsplit(line, ",");
-nFBC    = int32(str2num(linestr(2){:}))
+nFBC    = int32(str2num(linestr{1,2}))
 fbclist = zeros(nFBC, 3);
 
-%dof_force = zeros(nFBC, 1, "int32");
+dof_force = zeros(nFBC, 1, "int32");
 Fext = zeros(neq, 1);
 for i=1:nFBC
     line = fgets(fid);
     linestr = strsplit(line, ",");
 
-    n1 = int32(str2num(linestr(1){:}));
-    n2 = int32(str2num(linestr(2){:}));
+    n1 = int32(str2num(linestr{1,1}));
+    n2 = int32(str2num(linestr{1,2}));
     ind = (n1-1)*ndof + n2;
 
-%    dof_force(i) = ind;
-    Fext(ind) = double(str2num(linestr(3){:}));
+    dof_force(i) = ind;
+    Fext(ind) = double(str2num(linestr{1,3}));
 end
 
 % for output
 
 line=fgets(fid);
 linestr = strsplit(line, ",");
-nOutput = int32(str2num(linestr(2){:}))
+nOutput = int32(str2num(linestr{1,2}))
 outputlist = zeros(nOutput, 1, "int32");
 
 for i=1:nOutput
     line = fgets(fid);
     linestr = strsplit(line, ",");
 
-    n1 = int32(str2num(linestr(1){:}));
-    n2 = int32(str2num(linestr(2){:}));
+    n1 = int32(str2num(linestr{1,1}));
+    n2 = int32(str2num(linestr{1,2}));
 
     outputlist(i,1) = (n1-1)*ndof+n2;
 end
@@ -144,15 +144,15 @@ end
 
 line=fgets(fid);
 linestr = strsplit(line, ",");
-arclen  = (int32(linestr(2){:}) == 1);
+arclen  = (int32(linestr{1,2}) == 1);
 
 line=fgets(fid)
 linestr = strsplit(line, ",");
-maxloadSteps = int32(str2num(linestr(1){:}));
+maxloadSteps = int32(str2num(linestr{1,1}));
 
 line=fgets(fid)
 linestr = strsplit(line, ",");
-loadincr = double(str2num(linestr(1){:}));
+loadincr = double(str2num(linestr{1,1}));
 
 fclose(fid);
 

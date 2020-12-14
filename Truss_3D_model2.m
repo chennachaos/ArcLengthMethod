@@ -79,4 +79,4 @@ disp(6) = soln(ndof*(IEN(e,4)-1)+3);
     Klocal = Klocal + ((E*A0*L0*B')*B) ;
     Klocal = Klocal + ((N/L0)*H);
 
-endfunction
+end

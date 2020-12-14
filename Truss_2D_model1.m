@@ -63,7 +63,7 @@ disp(4) = soln(ndof*(IEN(e,4)-1)+2);
     % stiffness
     Klocal = Klocal + ((E*A0*B')*B)/L^3 ;
     Klocal = Klocal + ((N/L)*H);
-endfunction
+end
 
 
 

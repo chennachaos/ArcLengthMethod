@@ -13,7 +13,7 @@ function  [converged, du, dl, du1] = solve_arclength_split(timeStep, neq, iter, 
         A = 0.0;
         a = 0.0*Du(assy4r)';
         b = 1.0;
-    endif
+    end
 
     %%% Applying Boundary Conditions
 
@@ -22,7 +22,7 @@ function  [converged, du, dl, du1] = solve_arclength_split(timeStep, neq, iter, 
     rNorm = norm(R,2);
     rNorm = sqrt(rNorm*rNorm + A*A);
 
-    printf(' rNorm : %5d ...  %12.6E \n', iter, rNorm);
+    fprintf(' rNorm : %5d ...  %12.6E \n', iter, rNorm);
     du = R*0.0;
     dl = 0.0;
     converged = false;
@@ -46,4 +46,4 @@ function  [converged, du, dl, du1] = solve_arclength_split(timeStep, neq, iter, 
     dl = (a*du2 - A)/(b+a*du1);
 
     du = -du2 + dl*du1;
-endfunction
+end

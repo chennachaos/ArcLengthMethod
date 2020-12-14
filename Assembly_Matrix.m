@@ -1,6 +1,6 @@
 function global_matrix=Assembly_Matrix(global_matrix,local_matrix,LM,e)
 %%% Assemble global_matrix
-nen=size(LM)(2);
+nen=size(LM,2);
 for aa=1:nen
     mm=LM(e,aa);
     if mm~=0

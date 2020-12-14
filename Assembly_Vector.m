@@ -1,6 +1,6 @@
 function global_vector=Assembly_Vector(global_vector,local_vector,LM,e)
 %%% Assemble F_global
-nen=size(LM)(2);
+nen=size(LM,2);
 for aa=1:nen
     mm=LM(e,aa);
     if mm~=0

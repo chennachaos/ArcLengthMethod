@@ -7,11 +7,11 @@ format long;
 
 %fname = "input_Truss_2D_3members_model1.txt";
 %fname = "input_Truss_3D_2members.txt";
-%fname = "input_Truss_3D_12members.txt";
+fname = "input_Truss_3D_12members.txt";
 
-%fname = "input_LeeFrame-nelem10.txt";
+%fname = "input_LeeFrame-nelem20.txt";
 %fname = "input_arch-215deg.txt";
-fname = "input_Arch_semicircle-nelem50-sym.txt";
+%fname = "input_Arch_semicircle-nelem50-sym.txt";
 %fname = "input_Arch_semicircle-nelem50-unsym.txt";
 %fname = "input-beamEndMoment-nelem10.txt";
 
@@ -49,10 +49,8 @@ llist = [0.0];
 
 dispFull = [disp];
 
-countrestarts = 0;
-
 for  loadStep=1:maxloadSteps
-    printf("load step = %d \n", loadStep);
+    fprintf("load step = %d \n", loadStep);
 
     if(loadStep > 1)
       Ds
@@ -60,7 +58,7 @@ for  loadStep=1:maxloadSteps
       DsFactor1 = Ds/DsPrev
       disp     = (1.0+DsFactor1)*dispPrev - DsFactor1*dispPrev2;
       loadfactor = (1.0+DsFactor1)*loadfactorPrev - DsFactor1*loadfactorPrev2;
-    endif
+    end
 
     Du = disp - dispPrev;
     Dl = loadfactor - loadfactorPrev;
@@ -87,7 +85,7 @@ for  loadStep=1:maxloadSteps
                 Kglobal = Assembly_Matrix(Kglobal,Klocal,LM,e);
                 Rglobal = Assembly_Vector(Rglobal,Flocal,LM,e);
             end
-          endif
+          end
         else
           if(ndof == 3) % Truss element
             for e = 1:nelem
@@ -96,8 +94,8 @@ for  loadStep=1:maxloadSteps
                 Kglobal = Assembly_Matrix(Kglobal,Klocal,LM,e);
                 Rglobal = Assembly_Vector(Rglobal,Flocal,LM,e);
             end
-          endif
-        endif
+          end
+        end
 
         Rglobal = Rglobal + loadfactor*Fext;
 
@@ -106,7 +104,7 @@ for  loadStep=1:maxloadSteps
 
         if(converged)
           break;
-        endif
+        end
 
         disp(assy4r) = disp(assy4r) + du;
         loadfactor = loadfactor + dl;
@@ -132,7 +130,7 @@ for  loadStep=1:maxloadSteps
       DsPrev = Ds;
       if(convergedPrev)
         Ds = min(max(2.0*Ds, DsMin), DsMax);
-      endif
+      end
 
       dispFull = [dispFull; disp];
       output = [output disp(outputlist)];
@@ -166,19 +164,15 @@ for  loadStep=1:maxloadSteps
 
       loadStepConverged = loadStepConverged + 1;
     else
-      countrestarts = countrestarts + 1;
-
       if(convergedPrev)
         Ds = max(Ds*0.5, DsMin);
       else
         Ds = max(Ds*0.25, DsMin);
-      endif
-    endif
+      end
+    end
 
 %    waitforbuttonpress
 end
-
-countrestarts
 
 %plot(abs(output(1,:)), llist,'bx-');
 %hold on
@@ -193,7 +187,7 @@ countrestarts
 
 fileID = fopen('solution.dat','w');
 
-for ii=1:size(dispFull)(1)
+for ii=1:size(dispFull,1)
     fprintf(fileID,'%12.8f \n', dispFull(ii));
 end
 
@@ -202,7 +196,7 @@ fclose(fileID)
 
 fileID = fopen('path.dat','w');
 
-for ii=1:size(llist)(1)
+for ii=1:size(llist,1)
     fprintf(fileID,'%12.8f \t %12.8f \t %12.8f \n', llist(ii), output(1,ii), output(2,ii));
 %    fprintf(fileID,'%12.8f \t %12.8f \t %12.8f \t %12.8f \n', llist(ii), output(1,ii), output(2,ii), output(3,ii));
 end
