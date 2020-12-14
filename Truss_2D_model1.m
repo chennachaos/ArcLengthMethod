@@ -1,4 +1,4 @@
-function [Klocal, Flocal]=Truss_2D_model2(elmDat, IEN, e, XX, soln, bf)
+function [Klocal, Flocal]=Truss_2D_model1(elmDat, IEN, e, XX, soln, bf)
 
 ndof = 2;
 
