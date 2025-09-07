@@ -7,9 +7,9 @@ format long;
 
 %fname = "input_Truss_2D_3members_model1.txt";
 %fname = "input_Truss_3D_2members.txt";
-fname = "input_Truss_3D_12members.txt";
+%fname = "input_Truss_3D_12members.txt";
 
-%fname = "input_LeeFrame-nelem20.txt";
+fname = "input_LeeFrame-nelem20.txt";
 %fname = "input_arch-215deg.txt";
 %fname = "input_Arch_semicircle-nelem50-sym.txt";
 %fname = "input_Arch_semicircle-nelem50-unsym.txt";
@@ -135,7 +135,7 @@ for  loadStep=1:maxloadSteps
       dispFull = [dispFull; disp];
       output = [output disp(outputlist)];
       llist = [llist; loadfactor];
-      
+
 %      plot(abs(output(1,:)), llist,'bx-');
 %      hold on
       plot(abs(output(2,:)), llist,'bs-');
@@ -177,7 +177,7 @@ end
 %plot(abs(output(1,:)), llist,'bx-');
 %hold on
 %plot(abs(output(2,:)), llist,'ko-');
-      
+
 %plot(t, dy,'k-')
 %figure(1)
 %plot(coords(:,1)+disp(1:3:neq-1), coords(:,2)+disp(2:3:neq-1), 'ko-')
