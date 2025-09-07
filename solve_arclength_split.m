@@ -34,6 +34,7 @@ function  [converged, du, dl, du1] = solve_arclength_split(timeStep, neq, iter, 
 
     K1 = Kglobal(assy4r,assy4r);
     [L, U, P] = lu(sparse(K1));
+    %[L, U, P] = lu(K1);
 
     %% solve the matrix system
     duu = L\(P*FextReduced);

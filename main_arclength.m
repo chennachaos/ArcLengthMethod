@@ -9,11 +9,11 @@ format long;
 %fname = "input_Truss_3D_2members.txt";
 %fname = "input_Truss_3D_12members.txt";
 
-fname = "input_LeeFrame-nelem20.txt";
+%fname = "input_LeeFrame-nelem20.txt";
 %fname = "input_arch-215deg.txt";
 %fname = "input_Arch_semicircle-nelem50-sym.txt";
 %fname = "input_Arch_semicircle-nelem50-unsym.txt";
-%fname = "input-beamEndMoment-nelem10.txt";
+fname = "input-beamEndMoment-nelem20.txt";
 
 [ndim, ndof, nnode, nelem, coords, elemConn, elemData, LM, neq, assy4r, dof_force, Fext, maxloadSteps, loadincr, outputlist] = processfile(fname)
 
@@ -51,6 +51,7 @@ dispFull = [disp];
 
 for  loadStep=1:maxloadSteps
     fprintf("load step = %d \n", loadStep);
+    fprintf("loadfactor = %f \n", loadfactor);
 
     if(loadStep > 1)
       Ds

@@ -11,11 +11,11 @@ format long g;
 %fname = "input_Truss_3D_12members.txt";
 
 %fname = "input_LeeFrame-nelem10.txt";
-fname = "input_LeeFrame-nelem20.txt";
+%fname = "input_LeeFrame-nelem20.txt";
 %fname = "input_arch-215deg.txt";
 %fname = "input_Arch_semicircle-nelem50-sym.txt";
 %fname = "input_Arch_semicircle-nelem50-unsym.txt";
-%fname = "input-beamEndMoment-nelem20.txt";
+fname = "input-beamEndMoment-nelem20.txt";
 
 %fname = "lattice2.txt"
 
@@ -54,6 +54,9 @@ for  loadStep=1:maxloadSteps
 
     fprintf("load step = %d \t load factor = %f \n", loadStep, loadfactor);
 
+    DsFactor1 = 1.0;
+    disp     = (1.0+DsFactor1)*dispPrev - DsFactor1*dispPrev2;
+
     convergedPrev = converged;
     converged = false;
 
@@ -89,7 +92,7 @@ for  loadStep=1:maxloadSteps
         end
 
         Rglobal = Rglobal + loadfactor*Fext;
-        
+
         rNorm = norm(Rglobal(dofs_free),2);
 
         fprintf(' rNorm : %5d ...  %12.6E \n', iter, rNorm);
@@ -128,6 +131,7 @@ for  loadStep=1:maxloadSteps
 
       loadStepConverged = loadStepConverged + 1;
     else
+      loadfactor = loadfactorPrev;
       loadincr = loadincr*0.5;
     end
 
